@@ -80,6 +80,18 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('@/pages/SellerMessages.vue'),
     meta: { requiresAuth: true }
   },
+  {
+    path: '/notifications',
+    name: 'Notifications',
+    component: () => import('@/pages/Notifications.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/logistics',
+    name: 'Logistics',
+    component: () => import('@/pages/Logistics.vue'),
+    meta: { requiresAuth: true }
+  },
 ]
 
 const router = createRouter({
