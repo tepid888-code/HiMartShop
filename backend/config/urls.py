@@ -20,6 +20,7 @@ urlpatterns = [
         path('promotions/', include('apps.promotions.urls')),
         path('logistics/', include('apps.logistics.urls')),
         path('notifications/', include('apps.notifications.urls')),
+        path('sellers/', include('apps.sellers.urls')),
     ])),
 ]
 
