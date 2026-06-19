@@ -1,6 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
-from apps.users.models import User
+from apps.users.models import User, Wishlist
 from apps.stores.models import Store
 
 class Category(models.Model):
@@ -55,6 +55,8 @@ class Product(models.Model):
             models.Index(fields=['slug']),
             models.Index(fields=['category']),
             models.Index(fields=['store']),
+            models.Index(fields=['is_active', 'created_at']),
+            models.Index(fields=['is_active', 'rating']),
         ]
 
     def __str__(self):
@@ -87,6 +89,10 @@ class ProductReview(models.Model):
     class Meta:
         ordering = ['-created_at']
         unique_together = ('product', 'user')
+        indexes = [
+            models.Index(fields=['product_id', 'created_at']),
+            models.Index(fields=['user_id', 'created_at']),
+        ]
 
     def __str__(self):
         return f"Review by {self.user.username} for {self.product.name}"
@@ -104,3 +110,15 @@ class ProductInventory(models.Model):
 
     def __str__(self):
         return f"Inventory for {self.product.name} at {self.store.name}"
+
+class WishlistItem(models.Model):
+    wishlist = models.ForeignKey(Wishlist, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('wishlist', 'product')
+        ordering = ['-added_at']
+
+    def __str__(self):
+        return f"{self.wishlist.user.username} - {self.product.name}"

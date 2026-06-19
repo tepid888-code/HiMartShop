@@ -9,7 +9,7 @@ set -e
 # ========== 配置 ==========
 SERVER_IP="64.181.193.238"
 SSH_USER="ubuntu"
-SSH_KEY="$HOME/.ssh/id_rsa"  # 你的 SSH 密钥路径（需要替换为实际路径）
+SSH_KEY="/c/Users/85142/.ssh/ssh-key-2026-03-17.key"  # Windows 路径转 WSL 格式
 
 PROJECT_NAME="himart"
 PROJECT_DIR="/home/${SSH_USER}/${PROJECT_NAME}"

@@ -1,4 +1,5 @@
-import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHistory, RouteRecordRaw, NavigationGuardNext, RouteLocationNormalized } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -24,7 +25,8 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/checkout',
     name: 'Checkout',
-    component: () => import('@/pages/Checkout.vue')
+    component: () => import('@/pages/Checkout.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/login',
@@ -39,12 +41,26 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/orders',
     name: 'Orders',
-    component: () => import('@/pages/Orders.vue')
+    component: () => import('@/pages/Orders.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/orders/:id',
+    name: 'OrderDetail',
+    component: () => import('@/pages/OrderDetail.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/payment/:id',
+    name: 'Payment',
+    component: () => import('@/pages/Payment.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/account',
     name: 'Account',
-    component: () => import('@/pages/Account.vue')
+    component: () => import('@/pages/Account.vue'),
+    meta: { requiresAuth: true }
   },
 ]
 
@@ -52,5 +68,26 @@ const router = createRouter({
   history: createWebHistory(),
   routes
 })
+
+// 路由守卫
+router.beforeEach(
+  (to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
+    const authStore = useAuthStore()
+
+    // 检查路由是否需要认证
+    if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+      // 未认证且需要认证，重定向到登录
+      next({
+        name: 'Login',
+        query: { redirect: to.fullPath }
+      })
+    } else if ((to.name === 'Login' || to.name === 'Register') && authStore.isAuthenticated) {
+      // 已认证且访问登录/注册页，重定向到首页
+      next({ name: 'Home' })
+    } else {
+      next()
+    }
+  }
+)
 
 export default router
