@@ -96,7 +96,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-SECURE_SSL_REDIRECT = env('SECURE_SSL_REDIRECT', default=False)
+# 禁用SSL重定向以支持本地/开发部署
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 
 CACHES = {
     'default': {
