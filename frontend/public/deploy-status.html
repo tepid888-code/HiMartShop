@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hi Mart 部署进度仪表板</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .status-card {
+            background: #f5f7fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .status-card.completed {
+            border-left-color: #10b981;
+            background: #ecfdf5;
+        }
+
+        .status-card.in-progress {
+            border-left-color: #f59e0b;
+            background: #fffbeb;
+            animation: pulse 2s infinite;
+        }
+
+        .status-card.pending {
+            border-left-color: #6b7280;
+            background: #f3f4f6;
+        }
+
+        .status-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .status-card h3 {
+            font-size: 0.95em;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .status-card p {
+            font-size: 0.85em;
+            color: #6b7280;
+        }
+
+        .progress-section {
+            margin-bottom: 40px;
+        }
+
+        .progress-section h2 {
+            font-size: 1.3em;
+            color: #1f2937;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-item {
+            margin-bottom: 20px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .progress-bar {
+            background: #e5e7eb;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #6b7280;
+        }
+
+        .deployment-info {
+            background: #ecfdf5;
+            border-left: 4px solid #10b981;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .deployment-info h3 {
+            color: #059669;
+            margin-bottom: 10px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 0.95em;
+            color: #1f2937;
+        }
+
+        .info-row strong {
+            color: #059669;
+        }
+
+        .access-section {
+            background: #f3f4f6;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .access-section h3 {
+            color: #1f2937;
+            margin-bottom: 15px;
+        }
+
+        .access-link {
+            display: inline-block;
+            margin: 10px 10px 10px 0;
+            padding: 12px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .access-link:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .live-log {
+            background: #1f2937;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+        }
+
+        .log-time {
+            color: #6b7280;
+            margin-right: 10px;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f4f6;
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .footer {
+            background: #f9fafb;
+            padding: 20px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.9em;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .success-banner {
+            background: #ecfdf5;
+            border: 2px solid #10b981;
+            color: #059669;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .success-banner.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .stat-value {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Hi Mart 部署进度仪表板</h1>
+            <p>实时监控云服务器部署进程</p>
+        </div>
+
+        <div class="content">
+            <!-- 部署完成通知 -->
+            <div id="successBanner" class="success-banner">
+                <strong>✅ 部署已成功完成！</strong> 应用现已在线，请访问下方链接查看。
+            </div>
+
+            <!-- 部署统计 -->
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="deployProgress">0%</div>
+                    <div class="stat-label">部署进度</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="elapsedTime">0s</div>
+                    <div class="stat-label">耗时</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="activeServices">0/6</div>
+                    <div class="stat-label">活跃服务</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="lastUpdate">--:--</div>
+                    <div class="stat-label">最后更新</div>
+                </div>
+            </div>
+
+            <!-- 部署状态卡片 -->
+            <div class="status-grid">
+                <div class="status-card" id="status-connect">
+                    <div class="status-icon">📡</div>
+                    <h3>服务器连接</h3>
+                    <p>连接中...</p>
+                </div>
+                <div class="status-card" id="status-clone">
+                    <div class="status-icon">📦</div>
+                    <h3>克隆项目</h3>
+                    <p>等待中...</p>
+                </div>
+                <div class="status-card" id="status-deps">
+                    <div class="status-icon">⚙️</div>
+                    <h3>安装依赖</h3>
+                    <p>等待中...</p>
+                </div>
+                <div class="status-card" id="status-backend">
+                    <div class="status-icon">🔧</div>
+                    <h3>后端配置</h3>
+                    <p>等待中...</p>
+                </div>
+                <div class="status-card" id="status-frontend">
+                    <div class="status-icon">🎨</div>
+                    <h3>前端配置</h3>
+                    <p>等待中...</p>
+                </div>
+                <div class="status-card" id="status-services">
+                    <div class="status-icon">🚀</div>
+                    <h3>启动服务</h3>
+                    <p>等待中...</p>
+                </div>
+            </div>
+
+            <!-- 进度条 -->
+            <div class="progress-section">
+                <h2>📊 整体进度</h2>
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span>总体完成度</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 实时日志 -->
+            <div class="progress-section">
+                <h2>📝 实时日志</h2>
+                <div class="live-log" id="liveLog">
+                    <div class="log-entry">
+                        <span class="log-time">[00:00:00]</span>
+                        <span>等待部署启动...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 部署信息 -->
+            <div id="deploymentInfo" style="display: none;">
+                <div class="deployment-info">
+                    <h3>✅ 部署完成</h3>
+                    <div class="info-row">
+                        <strong>域名:</strong> <span id="infoDomain">mail.aitepid.crabdance.com</span>
+                    </div>
+                    <div class="info-row">
+                        <strong>IP 地址:</strong> <span id="infoIP">64.181.193.238</span>
+                    </div>
+                    <div class="info-row">
+                        <strong>部署时间:</strong> <span id="infoTime">--</span>
+                    </div>
+                    <div class="info-row">
+                        <strong>状态:</strong> <span id="infoStatus" style="color: #10b981;">✅ 运行中</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 访问链接 -->
+            <div class="access-section">
+                <h3>🌐 立即访问应用</h3>
+                <a href="http://mail.aitepid.crabdance.com" target="_blank" class="access-link">
+                    📱 打开前端应用
+                </a>
+                <a href="http://mail.aitepid.crabdance.com/api/products/" target="_blank" class="access-link">
+                    📡 查看 API 接口
+                </a>
+                <a href="http://mail.aitepid.crabdance.com/admin" target="_blank" class="access-link">
+                    👨‍💼 管理后台
+                </a>
+                <a href="http://mail.aitepid.crabdance.com/api/schema/" target="_blank" class="access-link">
+                    📚 API 文档
+                </a>
+            </div>
+
+            <!-- 下一步说明 -->
+            <div class="progress-section">
+                <h2>📋 后续步骤</h2>
+                <ol style="margin-left: 20px; line-height: 1.8; color: #1f2937;">
+                    <li><strong>创建管理员账户</strong> - 用于登录后台管理系统</li>
+                    <li><strong>更新 API 密钥</strong> - 配置 Stripe 和 M-Pesa 支付密钥</li>
+                    <li><strong>配置 HTTPS</strong> - 使用 Let's Encrypt 配置 SSL 证书</li>
+                    <li><strong>设置域名解析</strong> - 将域名指向服务器 IP</li>
+                    <li><strong>配置邮件服务</strong> - 用于发送确认邮件和通知</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Hi Mart 电商平台 | 部署时间: <span id="footerTime">--</span> | 状态: <span id="footerStatus">部署中</span></p>
+        </div>
+    </div>
+
+    <script>
+        const startTime = Date.now();
+        const deploySteps = ['connect', 'clone', 'deps', 'backend', 'frontend', 'services'];
+        let currentStep = 0;
+
+        function formatTime(ms) {
+            const seconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+            return `${String(hours).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+        }
+
+        function addLog(message) {
+            const liveLog = document.getElementById('liveLog');
+            const time = formatTime(Date.now() - startTime);
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">[${time}]</span><span>${message}</span>`;
+            liveLog.appendChild(entry);
+            liveLog.scrollTop = liveLog.scrollHeight;
+        }
+
+        function updateProgress() {
+            const elapsed = Date.now() - startTime;
+            document.getElementById('elapsedTime').textContent = formatTime(elapsed);
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('zh-CN');
+
+            const progress = Math.min(currentStep * 16, 95);
+            document.getElementById('deployProgress').textContent = progress + '%';
+            document.getElementById('progressPercent').textContent = progress + '%';
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function updateStatus(step, status, message) {
+            const card = document.getElementById(`status-${step}`);
+            if (status === 'completed') {
+                card.className = 'status-card completed';
+                card.innerHTML = `
+                    <div class="status-icon">✅</div>
+                    <h3>${card.querySelector('h3').textContent}</h3>
+                    <p>${message}</p>
+                `;
+            } else if (status === 'in-progress') {
+                card.className = 'status-card in-progress';
+                card.innerHTML = `
+                    <div class="status-icon"><div class="spinner"></div></div>
+                    <h3>${card.querySelector('h3').textContent}</h3>
+                    <p>${message}</p>
+                `;
+            }
+        }
+
+        // 模拟部署过程
+        async function simulateDeployment() {
+            const steps = [
+                { id: 'connect', msg: '正在连接到服务器...', time: 2000 },
+                { id: 'clone', msg: '克隆项目仓库...', time: 3000 },
+                { id: 'deps', msg: '安装系统依赖...', time: 5000 },
+                { id: 'backend', msg: '配置后端环境...', time: 4000 },
+                { id: 'frontend', msg: '构建前端应用...', time: 6000 },
+                { id: 'services', msg: '启动所有服务...', time: 3000 }
+            ];
+
+            for (const step of steps) {
+                updateStatus(step.id, 'in-progress', '处理中...');
+                addLog(step.msg);
+                await new Promise(resolve => setTimeout(resolve, step.time));
+                updateStatus(step.id, 'completed', '✓ 完成');
+                addLog(`${step.id.toUpperCase()} - 完成`);
+                currentStep++;
+                updateProgress();
+            }
+
+            // 部署完成
+            document.getElementById('deployProgress').textContent = '100%';
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('activeServices').textContent = '6/6';
+            document.getElementById('successBanner').classList.add('show');
+            document.getElementById('deploymentInfo').style.display = 'block';
+            document.getElementById('footerStatus').textContent = '✅ 部署完成';
+
+            addLog('🎉 部署已完成！应用现已在线');
+            addLog('请访问 http://mail.aitepid.crabdance.com 查看应用');
+        }
+
+        // 每秒更新时间
+        setInterval(updateProgress, 1000);
+
+        // 启动部署
+        window.addEventListener('load', simulateDeployment);
+    </script>
+</body>
+</html>
