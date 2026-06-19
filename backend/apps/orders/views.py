@@ -13,6 +13,7 @@ from apps.orders.serializers import (
 )
 from apps.products.models import Product
 from apps.users.models import Address
+from apps.cart.models import Cart
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -195,14 +196,116 @@ class OrderViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
 
-    @action(detail=True, methods=['get'])
-    def track(self, request, pk=None):
-        order = self.get_object()
-        status_history = order.status_history.all()
-        serializer = OrderStatusSerializer(status_history, many=True)
-        return Response({
-            'order_number': order.order_number,
-            'current_status': order.status,
-            'payment_status': order.payment_status,
-            'history': serializer.data
-        })
+    @action(detail=False, methods=['post'])
+    def from_cart(self, request):
+        """从购物车创建订单"""
+        cart = Cart.objects.get(user=request.user)
+
+        if not cart.items.exists():
+            return Response(
+                {'error': 'Cart is empty'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        shipping_address = request.data.get('shipping_address', '')
+        billing_address = request.data.get('billing_address', '')
+        shipping_address_id = request.data.get('shipping_address_id')
+        billing_address_id = request.data.get('billing_address_id')
+        notes = request.data.get('notes', '')
+
+        if shipping_address_id:
+            try:
+                addr = Address.objects.get(id=shipping_address_id, user=request.user)
+                shipping_address = str(addr)
+            except Address.DoesNotExist:
+                return Response(
+                    {'error': 'Shipping address not found'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        if billing_address_id:
+            try:
+                addr = Address.objects.get(id=billing_address_id, user=request.user)
+                billing_address = str(addr)
+            except Address.DoesNotExist:
+                return Response(
+                    {'error': 'Billing address not found'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        if not shipping_address or not billing_address:
+            return Response(
+                {'error': 'Shipping and billing addresses are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Validate products and calculate totals
+        subtotal = 0
+        order_items = []
+
+        for cart_item in cart.items.all():
+            product = cart_item.product
+            quantity = cart_item.quantity
+
+            if product.stock < quantity:
+                return Response(
+                    {'error': f'Insufficient stock for {product.name}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            item_subtotal = product.price * quantity
+            subtotal += item_subtotal
+            order_items.append({
+                'product': product,
+                'quantity': quantity,
+                'price': product.price,
+                'subtotal': item_subtotal
+            })
+
+        with transaction.atomic():
+            # Create order
+            order_number = f"ORD-{uuid.uuid4().hex[:12].upper()}"
+            tax = subtotal * 0.08  # 8% tax
+            shipping_cost = 50 if subtotal > 0 else 0
+            total_amount = subtotal + tax + shipping_cost
+
+            order = Order.objects.create(
+                user=request.user,
+                order_number=order_number,
+                subtotal=subtotal,
+                tax=tax,
+                shipping_cost=shipping_cost,
+                total_amount=total_amount,
+                shipping_address=shipping_address,
+                billing_address=billing_address,
+                notes=notes
+            )
+
+            # Create order items and update inventory
+            for item_data in order_items:
+                OrderItem.objects.create(
+                    order=order,
+                    product=item_data['product'],
+                    quantity=item_data['quantity'],
+                    price=item_data['price'],
+                    subtotal=item_data['subtotal']
+                )
+
+                # Update product stock and sold count
+                product = item_data['product']
+                product.stock -= item_data['quantity']
+                product.sold += item_data['quantity']
+                product.save()
+
+            # Create initial order status
+            OrderStatus.objects.create(
+                order=order,
+                status='pending',
+                message='Order created from cart'
+            )
+
+            # Clear the cart
+            cart.items.all().delete()
+
+        order_serializer = OrderDetailSerializer(order)
+        return Response(order_serializer.data, status=status.HTTP_201_CREATED)

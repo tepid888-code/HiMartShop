@@ -74,6 +74,22 @@ export const useOrdersStore = defineStore('orders', () => {
     }
   }
 
+  const createOrderFromCart = async (orderData: any) => {
+    try {
+      loading.value = true
+      const response = await ordersAPI.createOrderFromCart(orderData)
+      currentOrder.value = response.data
+      await fetchOrders()
+      error.value = null
+      return response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.detail || 'Failed to create order from cart'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   const cancelOrder = async (id: number) => {
     try {
       const response = await ordersAPI.cancelOrder(id)
@@ -108,6 +124,7 @@ export const useOrdersStore = defineStore('orders', () => {
     fetchOrders,
     fetchOrderDetail,
     createOrder,
+    createOrderFromCart,
     cancelOrder,
     trackOrder,
     getOrdersByStatus,
