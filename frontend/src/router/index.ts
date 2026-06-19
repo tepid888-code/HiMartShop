@@ -62,6 +62,24 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('@/pages/Account.vue'),
     meta: { requiresAuth: true }
   },
+  {
+    path: '/seller/dashboard',
+    name: 'SellerDashboard',
+    component: () => import('@/pages/SellerDashboard.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/seller/withdrawals',
+    name: 'SellerWithdrawals',
+    component: () => import('@/pages/SellerWithdrawals.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/seller/messages',
+    name: 'SellerMessages',
+    component: () => import('@/pages/SellerMessages.vue'),
+    meta: { requiresAuth: true }
+  },
 ]
 
 const router = createRouter({
