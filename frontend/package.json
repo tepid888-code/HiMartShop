@@ -1,0 +1,30 @@
+{
+  "name": "himart-frontend",
+  "version": "1.0.0",
+  "description": "Hi Mart E-Commerce Platform - Vue 3 Frontend",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "type-check": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "vue": "^3.4.21",
+    "vue-router": "^4.3.0",
+    "pinia": "^2.1.7",
+    "axios": "^1.6.5",
+    "tailwindcss": "^3.4.1",
+    "lucide-vue-next": "^0.294.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "vite": "^5.0.11",
+    "typescript": "^5.3.3",
+    "vue-tsc": "^1.8.22",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.32"
+  }
+}
