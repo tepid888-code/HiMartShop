@@ -156,11 +156,12 @@ MPESA_SHORTCODE = env('MPESA_SHORTCODE', default='')
 MPESA_PASSKEY = env('MPESA_PASSKEY', default='')
 MPESA_ENVIRONMENT = env('MPESA_ENVIRONMENT', default='sandbox')
 
-if not DEBUG:
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_BROWSER_XSS_FILTER = True
-    SECURE_CONTENT_SECURITY_POLICY = {
-        'default-src': ("'self'",),
-    }
+# 生产环境安全设置 (为了支持开发部署，这些禁用了)
+# if not DEBUG:
+#     SECURE_SSL_REDIRECT = True
+#     SESSION_COOKIE_SECURE = True
+#     CSRF_COOKIE_SECURE = True
+#     SECURE_BROWSER_XSS_FILTER = True
+#     SECURE_CONTENT_SECURITY_POLICY = {
+#         'default-src': ("'self'",),
+#     }
